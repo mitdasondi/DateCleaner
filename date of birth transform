@@ -1,0 +1,55 @@
+import pandas as pd
+from dateutil.parser import parse
+import datetime
+
+def clean_dob(date_str):
+    try:
+        # Convert non-string values to string
+        if not isinstance(date_str, str):
+            date_str = str(date_str)
+
+        # Parse the date
+        parsed_date = parse(date_str)
+
+        # Check if the year is in the future
+        current_year = datetime.datetime.now().year
+        if parsed_date.year > current_year:
+            parsed_date = parsed_date.replace(year=parsed_date.year - 100)
+
+        # Convert it to 'YYYY-MM-DD' format
+        return parsed_date.strftime('%Y-%m-%d')
+    except ValueError:
+        # Handle invalid dates or other errors
+        return None
+
+def find_dob_column(df):
+    # Look for a column containing 'dob' in the name
+    dob_columns = [col for col in df.columns if 'dob' in col.lower()]
+    
+    if dob_columns:
+        return dob_columns[0]
+    else:
+        return None
+
+def process_csv(input_path, output_path):
+    # Read the CSV file into a pandas DataFrame
+    df = pd.read_csv(input_path)
+
+    # Find the date of birth column
+    dob_column = find_dob_column(df)
+
+    if dob_column:
+        # Create a new column 'cleaned_dob' by applying the clean_dob function to the date of birth column
+        df['cleaned_dob'] = df[dob_column].apply(clean_dob)
+
+        # Save the DataFrame with the new column to a new CSV file
+        df.to_csv(output_path, index=False)
+        print("Processing complete. Output saved to:", output_path)
+    else:
+        print("Error: Date of birth column not found in the CSV file.")
+
+if __name__ == "__main__":
+    input_csv_path = r"Some-Path" #put input path here
+    output_csv_path = r"Some-Path" #output path here
+
+    process_csv(input_csv_path, output_csv_path)
